@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset=utf-8 />
+    <!--Comapny Title-->
+    <title>RichardGrubbAndAssociates</title>
+    <!--Links to appropriate APIs and Scripts-->
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.4.4/proj4.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js"></script>
+    <link href='http://fonts.googleapis.com/css?family=Lato' rel='stylesheet' type='text/css'>
+    <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js'></script>
+    <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet' />
+    <!--Could not get this to work-->
+    <link href='https://github.com/ljagis/leaflet-measure.git'/>
+    
+    <style>
+        /*Style set to have image cover the entire background*/
+        body {
+            background-size: cover;
+        }
+        /*Could not get this to work for customizing popup*/
+        .custom.leaflet-popup-tip,
+        .custom.leaflet-popup-content-wrapper {
+        background: none;
+        color: red;
+        font-family: Impact;
+        text-decoration: underline;
+        text-shadow: 2px 2px black;
+        font-size: 20;
+        }
+        header {
+            position:absolute;
+            left: 1%;
+            top: 1%;
+        }
+        h1 {
+            display: inline;
+            margin-right: 10px;
+            color: whitesmoke;
+            font-family: Garamond;
+            font-size: 60pt;
+        }
+        h2 {
+            display: inline-block;
+            color:whitesmoke;
+            font-size: 30pt;
+        }
+        #map {
+            width: 48%;
+            height: 900px;
+            top: 100px;
+            left: 20px ;
+            background: #710F11;
+            border-style: groove;
+            border-radius: 1%;
+            border-color: gray;
+            position: relative;
+            float:left;
+            padding-right: 20px;
+            z-index: 1;
+            position:relative;
+        }
+            #list {
+            position: relative;
+        }
+            p {
+            font-size: 1em;
+            color: #001323;
+        }
+        #rightSide {
+            padding-top: 50px;
+            padding-left: 50px;
+            z-index: 999;
+            position:relative;
+            right:10px;
+            float: right;
+        }
+        #headerRight {
+            padding-left: 50px;
+            z-index: 999;
+            position:relative;
+            right:10px;
+            text-decoration: underline
+        }
+       
+    </style>
+</head>
+<body background= "background.jpg"; ,style= background-size: cover;>
+    <header>
+    <h1 >RGA, Inc.</h1>
+    <h2 >New Jersey Archaeological Projects</h2>
+    <h2 id= "headerRight">List of Project Codes</h2>
+    </header>
+    <div id='map'></div>
+    <div id= "rightSide">
+        <ul id='list' style= 'font-size: 28pt; padding-top: 59px; padding-bottom: 50px; color: whitesmoke; 30%; float: right; right: 500px; zindex;999'>
+        <li>2017182</li>
+        <li>2017185</li>
+        <li>2017190</li>
+        <li>2017200</li>
+        <li>2017206</li>
+        <li>2017220</li>
+        <li>2017225</li>
+        <li>2017239</li>
+        <li>2018004</li>
+        <li>2018050</li>
+    </ul>
+<!--INPUTTING THE PROJECT NUMBER-->    
+<div id="butto" style= 'float:right; z-index: 999; padding-top: 550px; padding-left: 50px; z-index:999'>
+    
+<button id="butt" style="height: 40px; font-family: z-index: 998; Garamond; font-size: 20px;z-index:999">Enter Project Number</button>
+
+<div style= "padding-top: 50px; z-index: 999">
+ <img src= 'legend.png'>
+</div>
+        </div>
+    
+<script src="APE_WGS_04262018.json"></script>
+<script src="STP_WGS_04252018.js"></script>
+<script src="EU_WGS_04272018.json"></script>
+<script src="Feature_WGS_04272018.json"></script>
+<script>
+   
+    var options = {
+        center: [40.15,-74.65],
+        zoom:8,
+        fullscreenControl: true,
+        measureControl: true
+    }
+    
+    var map = L.map('map',options)
+    
+   var NJ2015 = L.tileLayer.wms('http://geodata.state.nj.us/imagerywms/Natural2015?', {
+    layers: 'Natural2015', maxZoom:22
+});
+   var WorldImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+	attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+    maxZoom:22
+});
+    var WorldStreetMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+	attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012', maxZoom:22
+});
+    var NJ1930 = L.tileLayer.wms('http://geodata.state.nj.us/imagerywms/BlackWhite1930?', {
+    layers: 'BlackWhite1930', maxZoom:22
+});
+    var NJTidelands = L.tileLayer.wms('http://geodata.state.nj.us/imagerywms/BlackWhite1977?', {
+    layers: 'BlackWhite1977', maxZoom:22
+});
+    map.addLayer(NJ2015);
+    
+var customOptions = {'className' : 'custom'};
+ 
+    //Shovel Test Pit Icons
+var ncmIcon = L.icon({iconUrl: 'NCM.png',iconSize: [10, 10]});
+var pmIcon = L.icon({iconUrl: 'PM.png',iconSize: [10, 10]});
+var hmIcon = L.icon({iconUrl: 'HM.png',iconSize: [10, 10]});
+var hmpmIcon = L.icon({iconUrl: 'HMPM.png',iconSize: [10, 10]});
+var hmnrIcon = L.icon({iconUrl: 'HMNR.png',iconSize: [10, 10]});
+var hmpmnrIcon = L.icon({iconUrl: 'HMPMNR.png',iconSize: [10, 10]});
+var pmnrIcon = L.icon({iconUrl: 'PMNR.png',iconSize: [10, 10]});
+var neIcon = L.icon({iconUrl: 'NE.png',iconSize: [10, 10]});
+var nrIcon = L.icon({iconUrl: 'NR.png',iconSize: [10, 10]});
+var legend = L.icon({iconUrl: 'STP LEGEND.png',iconSize: [100, 100]});
+
+var apeLayer= L.layerGroup().addTo(map);
+var stpLayer= L.layerGroup().addTo(map);
+var featureLayer= L.layerGroup().addTo(map);
+var euLayer= L.layerGroup().addTo(map);
+    
+//Event Listener Button
+document.getElementById('butt')
+    .addEventListener('click', function(){
+    var proNum = prompt('Please enter project code as 7 digit number.');
+
+    //The Area of Potential Effects
+var ape2=L.geoJson(ape
+           , {filter: function(feature,layer) {
+         if (feature.properties.project==proNum) {
+         return feature}},
+           onEachFeature : function(feature,layer) {
+    layer.bindPopup("<b>Acreage: </b>" + feature.properties.Acreage, customOptions
+)}
+             }).setStyle({color:"#710F11", fillOpacity:0.0}).addTo(map).addTo(apeLayer);
+    map.fitBounds(ape2.getBounds());
+    
+    //Excavation Units
+var eu2=L.geoJson(eu
+           , {filter: function(feature,layer) {
+         if (feature.properties.project==proNum) {
+         return feature}},
+           onEachFeature : function(feature,layer) {
+    layer.bindPopup("<strong>" + feature.properties.Unit+"</strong><br>"+feature.properties.dimension, customOptions
+)}
+             }).setStyle({color:"green", fillOpacity:0.3}).addTo(map).addTo(euLayer);
+    
+var feat2=L.geoJson(feat
+           , {filter: function(feature,layer) {
+         if (feature.properties.project==proNum) {
+         return feature}},
+           onEachFeature : function(feature,layer) {
+    layer.bindPopup("<strong>" + feature.properties.Feature+"</strong>", customOptions
+)}
+             }).setStyle({color:"blue", fillOpacity:0.5}).addTo(map).addTo(featureLayer);
+    
+    //Shovel Test Pits
+var stpNcm= L.geoJson(stp, {
+    pointToLayer: function(feature,latlng) {
+        return L.marker(latlng, {icon: ncmIcon});
+         },    
+    filter: function(feature,layer) {
+        if (feature.properties.project==proNum) {
+    return feature.properties.Result=='NCM';
+            }},    
+    onEachFeature : function(feature,layer) {
+    layer.bindPopup("<b>Test: </b>"+"<p>"+feature.properties.Test+"</p>"
+                   +"<p>"+"Result: "+feature.properties.Result+"</p>", customOptions);
+    }}).addTo(map).addTo(stpLayer);
+    
+var stpPm= L.geoJson(stp, {
+    pointToLayer: function(feature,latlng) {
+        return L.marker(latlng, {icon: pmIcon});
+         },    
+    filter: function(feature,layer) {
+        if (feature.properties.project==proNum) {
+    return feature.properties.Result=='PM';
+            }},      
+    onEachFeature : function(feature,layer) {
+    layer.bindPopup("<b>Test: </b>"+"<p>"+feature.properties.Test+"</p>"
+                   +"<p>"+"Result: "+feature.properties.Result+"</p>", customOptions);
+    }}).addTo(map).addTo(stpLayer);
+    
+var stpHm= L.geoJson(stp, {
+    pointToLayer: function(feature,latlng) {
+        return L.marker(latlng, {icon: hmIcon});
+         },    
+    filter: function(feature,layer) {
+        if (feature.properties.project==proNum) {
+    return feature.properties.Result=='HM';
+            }},      
+    onEachFeature : function(feature,layer) {
+        
+    layer.bindPopup("<b>Test: </b>"+"<p>"+feature.properties.Test+"</p>"
+                   +"<p>"+"Result: "+feature.properties.Result+"</p>", customOptions);
+    }}).addTo(map).addTo(stpLayer);
+
+var stpHmpm= L.geoJson(stp, {
+    pointToLayer: function(feature,latlng) {
+        return L.marker(latlng, {icon: hmpmIcon});
+         },    
+    filter: function(feature,layer) {
+        if (feature.properties.project==proNum) {
+    return feature.properties.Result=='HMPM';
+            }},      
+    onEachFeature : function(feature,layer) {
+        
+    layer.bindPopup("<b>Test: </b>"+"<p>"+feature.properties.Test+"</p>"
+                   +"<p>"+"Result: "+feature.properties.Result+"</p>", customOptions);
+    }}).addTo(map).addTo(stpLayer);
+
+var stpHmpmnr= L.geoJson(stp, {
+    pointToLayer: function(feature,latlng) {
+        return L.marker(latlng, {icon: hmpmnrIcon});
+         },    
+    filter: function(feature,layer) {
+        if (feature.properties.project==proNum) {
+    return feature.properties.Result=='HMPMNR';
+            }},      
+    onEachFeature : function(feature,layer) {
+        
+    layer.bindPopup("<b>Test: </b>"+"<p>"+feature.properties.Test+"</p>"
+                   +"<p>"+"Result: "+feature.properties.Result+"</p>", customOptions);
+    }}).addTo(map).addTo(stpLayer);
+  
+var stpHmnr= L.geoJson(stp, {
+    pointToLayer: function(feature,latlng) {
+        return L.marker(latlng, {icon: hmnrIcon});
+         },    
+    filter: function(feature,layer) {
+        if (feature.properties.project==proNum) {
+    return feature.properties.Result=='HMNR';
+            }},      
+    onEachFeature : function(feature,layer) {
+        
+    layer.bindPopup("<b>Test: </b>"+"<p>"+feature.properties.Test+"</p>"
+                   +"<p>"+"Result: "+feature.properties.Result+"</p>", customOptions);
+    }}).addTo(map).addTo(stpLayer);
+
+var stpPmnr= L.geoJson(stp, {
+    pointToLayer: function(feature,latlng) {
+        return L.marker(latlng, {icon: pmnrIcon});
+         },    
+    filter: function(feature,layer) {
+        if (feature.properties.project==proNum) {
+    return feature.properties.Result=='PMNR';
+            }},      
+    onEachFeature : function(feature,layer) {
+        
+    layer.bindPopup("<b>Test: </b>"+"<p>"+feature.properties.Test+"</p>"
+                   +"<p>"+"Result: "+feature.properties.Result+"</p>", customOptions);
+    }}).addTo(map).addTo(stpLayer);
+    
+var stpNr= L.geoJson(stp, {
+    pointToLayer: function(feature,latlng) {
+        return L.marker(latlng, {icon: nrIcon});
+         },    
+    filter: function(feature,layer) {
+        if (feature.properties.project==proNum) {
+    return feature.properties.Result=='NR';
+            }},      
+    onEachFeature : function(feature,layer) {
+        
+    layer.bindPopup("<b>Test: </b>"+"<p>"+feature.properties.Test+"</p>"
+                   +"<p>"+"Result: "+feature.properties.Result+"</p>", customOptions);
+    }}).addTo(map).addTo(stpLayer);
+    
+var stpNe= L.geoJson(stp, {
+    pointToLayer: function(feature,latlng) {
+        return L.marker(latlng, {icon: neIcon});
+         },    
+    filter: function(feature,layer) {
+        if (feature.properties.project==proNum) {
+    return feature.properties.Result=='NE';
+            }},      
+    onEachFeature : function(feature,layer) {
+        
+    layer.bindPopup("<b>Test: </b>"+"<p>"+feature.properties.Test+"</p>"
+                   +"<p>"+"Result: "+feature.properties.Result+"</p>", customOptions);
+    }}).addTo(map).addTo(stpLayer);
+    
+    });
+
+var vectorLayers = {
+            "<b>Area of Potential Effects</b>": apeLayer,
+            "<b>Shovel Test Pits</b>": stpLayer,
+            "<b>Features</b>": featureLayer,
+            "<b>Excavation Units</b>": euLayer,
+                    }
+
+var baseMaps = {
+            "<b>2015 Aerial</b>": NJ2015,
+            "<b>World Imagery</b>": WorldImagery,
+            "<b>World Street Map</b>": WorldStreetMap,
+            "<b>1977 Tidelands</b>": NJTidelands,
+            "<b>1930 Aerial</b>": NJ1930
+        }
+  
+       
+
+        L.control.layers(baseMaps, vectorLayers, { collapsed:true }).addTo(map);  
+
+       
+</script>
+    
+    
+</body>
+    
+    
+</html>
